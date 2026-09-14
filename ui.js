@@ -105,8 +105,17 @@ export function openSessionDetail(id) {
 
   const stats = calculateStats(session.history || []);
   const statsContainer = document.getElementById('detail-stats-summary');
+  
   if (statsContainer) {
     const isMatch = session.mode.includes('IR900') || session.mode.includes('Závod');
+    
+    // Generování detailního rozpisu zásahů (X, 10, 9, 8...)
+    const hitsArray = ['X', '10', '9', '8', '7', '6', '5', '4', '3', '2', '1', 'M'];
+    const hitsHtml = hitsArray
+      .filter(k => stats.hitsCounts[k] > 0)
+      .map(k => `<span class="hit-tag"><strong>${k}:</strong> ${stats.hitsCounts[k]}x</span>`)
+      .join(' ');
+
     statsContainer.innerHTML = `
       <div class="stats-grid">
         <div class="stat-box"><span>Průměr / šíp:</span> <strong>${stats.average}</strong></div>
@@ -114,10 +123,22 @@ export function openSessionDetail(id) {
         <div class="stat-box"><span>Vedle (M):</span> <strong>${stats.MissesCount}</strong></div>
         <div class="stat-box"><span>Platných šípů:</span> <strong>${stats.validArrowsCount}</strong></div>
       </div>
+      
+      <div class="hits-breakdown margin-top">
+        <small style="color:#aaa;">Detailní zásahy:</small>
+        <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px;">
+          ${hitsHtml || '<span style="color:#888;">Žádná data</span>'}
+        </div>
+      </div>
+
       ${isMatch ? `
-        <div class="distance-breakdown margin-top">
-          <small>Průměr podle vzdáleností:</small>
-          <div>65m: <strong>${getDistanceAverage(stats.distanceBreakdown, '65m')}</strong> | 50m: <strong>${getDistanceAverage(stats.distanceBreakdown, '50m')}</strong> | 35m: <strong>${getDistanceAverage(stats.distanceBreakdown, '35m')}</strong></div>
+        <div class="distance-breakdown margin-top" style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">
+          <small style="color:#aaa;">Průměr podle vzdáleností:</small>
+          <div style="margin-top: 2px;">
+            65m: <strong>${getDistanceAverage(stats.distanceBreakdown, '65m')}</strong> | 
+            50m: <strong>${getDistanceAverage(stats.distanceBreakdown, '50m')}</strong> | 
+            35m: <strong>${getDistanceAverage(stats.distanceBreakdown, '35m')}</strong>
+          </div>
         </div>
       ` : ''}
     `;
@@ -207,7 +228,7 @@ function renderDetailHistoryTable(targetDist) {
   });
 }
 
-// Globální funkce pro HTML onclick události
+// Globální funkce pro HTML události
 window.openArrowModal = function(distKey) {
   state.editingDistance = distKey;
   const modalTitle = document.getElementById('modal-title');
