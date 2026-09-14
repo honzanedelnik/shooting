@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Střelecký deník - Polní kuše</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <h1 id="app-title-btn" style="cursor: pointer;">Kuše Kostelec</h1>
+    <div id="sync-status" class="sync-badge offline">
+      <span class="dot"></span>
+      <span id="sync-text">Offline</span>
+    </div>
+  </header>
+
+  <main class="app-content">
+    
+    <!-- OBRAZOVKA 0: Hlavní rozcestník (Střílet / Sledovat / Historie) -->
+    <section id="main-menu-screen" class="screen active">
+      <h2>Střelecký deník</h2>
+      <div class="card gap-y">
+        <button id="main-shoot-btn" class="btn btn-primary btn-block btn-lg">Střílet</button>
+        <button id="main-watch-btn" class="btn btn-secondary btn-block btn-lg">Sledovat</button>
+      </div>
+
+      <div class="card" style="margin-top: 15px;">
+        <h3>Uložené záznamy</h3>
+        <div id="saved-sessions-list" class="history-container">
+          <p class="empty-msg">Zatím nemáte žádné uložené záznamy.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- OBRAZOVKA 1: Výběr střelby (Nový závod / Nový trénink) -->
+    <section id="setup-screen" class="screen">
+      <h2>Výběr střelby</h2>
+      <div class="card">
+        <label for="mode-select">Typ relace:</label>
+        <select id="mode-select" class="input-control">
+          <option value="MATCH">Závod (IR900 - 96 šípů)</option>
+          <option value="TRAINING">Trénink</option>
+        </select>
+
+        <!-- Volba vzdálenosti pro Trénink -->
+        <div id="training-distance-group" style="display: none;">
+          <label for="distance-select">Vyberte trať:</label>
+          <select id="distance-select" class="input-control">
+            <option value="65m">65m</option>
+            <option value="50m">50m</option>
+            <option value="35m">35m</option>
+          </select>
+        </div>
+
+        <div class="info-box">
+          <p id="mode-description"><strong>Závod:</strong> 12 sad / vzdálenost (1. a 2. sada jsou zkušební). Celkem 32 sad.</p>
+        </div>
+
+        <!-- Přehled a nastavení šípů pro jednotlivé vzdálenosti -->
+        <div class="arrow-settings-section" style="margin-top: 15px;">
+          <h3>Přiřazení šípů</h3>
+          <div id="arrow-summary-display"></div>
+        </div>
+
+        <div class="action-buttons-stack" style="margin-top: 15px;">
+          <button id="start-btn" class="btn btn-primary btn-block">Zahájit střelbu</button>
+          <button id="back-to-main-btn-1" class="btn btn-secondary btn-block">Zpět</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- OBRAZOVKA 2: Sledování sdílených záznamů -->
+    <section id="watch-screen" class="screen">
+      <h2>Sdílené záznamy</h2>
+      <div class="card">
+        <p>Zde uvidíte živé přenosy a dokončené závodní protokoly ostatních střelců.</p>
+        <div class="history-container">
+          <p style="text-align: center; color: #888; padding: 20px 0;">Žádné aktivní živé přenosy.</p>
+        </div>
+        <button id="back-to-main-btn-2" class="btn btn-secondary btn-block" style="margin-top: 15px;">Zpět</button>
+      </div>
+    </section>
+
+    <!-- OBRAZOVKA 3: Zápis zásahů s interaktivním terčem -->
+    <section id="shooting-screen" class="screen">
+      <div class="match-info">
+        <span id="current-distance">65m</span>
+        <span id="current-set">Sada: 1 (Zkušební)</span>
+        <span id="total-score">Celkem: 0</span>
+      </div>
+
+      <!-- Výběr aktivního šípu z vybrané sady -->
+      <div class="arrow-selection-bar" style="margin-bottom: 10px; text-align: center;">
+        <small style="color: #ccc; display: block; margin-bottom: 4px;">Aktivní šíp:</small>
+        <div id="active-arrow-chips" style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;"></div>
+      </div>
+
+      <!-- Náhled aktuální sady (3 šípy) -->
+      <div class="current-arrows">
+        <div class="arrow-slot" data-index="0">-</div>
+        <div class="arrow-slot" data-index="1">-</div>
+        <div class="arrow-slot" data-index="2">-</div>
+      </div>
+
+      <!-- Interaktivní terč na celé plátno -->
+      <div class="target-container">
+        <canvas id="target-canvas"></canvas>
+      </div>
+
+      <!-- Ovládací tlačítka -->
+      <div class="action-buttons">
+        <button id="undo-btn" class="btn btn-danger">Smazat šíp</button>
+        <button id="confirm-set-btn" class="btn btn-success" disabled>Potvrdit sadu</button>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <button id="finish-session-btn" class="btn btn-secondary btn-block">Uložit a ukončit</button>
+      </div>
+
+      <!-- Přehled zapsaných sad -->
+      <div class="history-container">
+        <h3>Historie sad</h3>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Vzdál.</th>
+              <th>Sada</th>
+              <th>Šípy</th>
+              <th>Body</th>
+              <th>Celkem</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MODAL: Výběr šípů -->
+    <div id="arrow-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h3 id="modal-title">Úprava šípů</h3>
+        <p style="font-size: 0.85rem; color: #aaa;">Vyberte čísla šípů, které používáte:</p>
+        
+        <div style="display: flex; gap: 5px; margin-bottom: 10px; justify-content: center;">
+          <button type="button" class="btn btn-secondary" onclick="selectModalPreset(6)" style="font-size: 0.75rem; padding: 4px 8px;">1-6</button>
+          <button type="button" class="btn btn-secondary" onclick="selectModalPreset(12)" style="font-size: 0.75rem; padding: 4px 8px;">1-12</button>
+          <button type="button" class="btn btn-secondary" onclick="selectModalPreset(18)" style="font-size: 0.75rem; padding: 4px 8px;">1-18</button>
+          <button type="button" class="btn btn-secondary" onclick="selectModalPreset(30)" style="font-size: 0.75rem; padding: 4px 8px;">Všechny (1-30)</button>
+        </div>
+
+        <div id="modal-arrow-grid" class="arrow-grid"></div>
+
+        <div style="margin-top: 15px;">
+          <button id="modal-ok-btn" class="btn btn-primary btn-block">Hotovo</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Načtení hlavního JS skriptu jako ES Modul -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
