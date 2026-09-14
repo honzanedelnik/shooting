@@ -8,6 +8,12 @@ export function calculateStats(historyList) {
   let TensCount = 0;
   let MissesCount = 0;
 
+  // Detailní rozpad jednotlivých hodnot zásahů
+  const hitsCounts = {
+    'X': 0, '10': 0, '9': 0, '8': 0, '7': 0,
+    '6': 0, '5': 0, '4': 0, '3': 0, '2': 0, '1': 0, 'M': 0
+  };
+
   const distanceBreakdown = {
     '65m': { points: 0, count: 0 },
     '50m': { points: 0, count: 0 },
@@ -19,19 +25,30 @@ export function calculateStats(historyList) {
     // Počítáme pouze ostré sady (zkušební se do statistik nezapočítávají)
     if (!item.isTrial && item.arrowDetails) {
       item.arrowDetails.forEach(a => {
-        const val = parseArrowValue(a.value);
-        totalPoints += val;
+        const valStr = String(a.value).toUpperCase();
+        const valNum = parseArrowValue(a.value);
+        
+        totalPoints += valNum;
         validArrowsCount++;
 
-        if (a.value === '10' || a.value === '10X' || a.value === 'X') {
+        // Započítání konkrétní hodnoty zásahu
+        if (hitsCounts[valStr] !== undefined) {
+          hitsCounts[valStr]++;
+        } else if (valNum === 10) {
+          hitsCounts['10']++;
+        } else if (valStr === '0') {
+          hitsCounts['M']++;
+        }
+
+        if (valStr === '10' || valStr === '10X' || valStr === 'X') {
           TensCount++;
         }
-        if (a.value === 'M' || val === 0) {
+        if (valStr === 'M' || valStr === '0' || valNum === 0) {
           MissesCount++;
         }
 
         if (distanceBreakdown[item.distance]) {
-          distanceBreakdown[item.distance].points += val;
+          distanceBreakdown[item.distance].points += valNum;
           distanceBreakdown[item.distance].count++;
         }
       });
@@ -48,6 +65,7 @@ export function calculateStats(historyList) {
     average,
     TensCount,
     MissesCount,
+    hitsCounts,
     distanceBreakdown
   };
 }
