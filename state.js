@@ -1,4 +1,8 @@
 // --- Globální stav a konstanty ---
+
+// Načtení uložených šípů z localStorage
+const savedArrowsFromStorage = JSON.parse(localStorage.getItem('archery_arrows'));
+
 export const state = {
   discipline: 'IR900',
   currentDistance: '65m',
@@ -6,7 +10,8 @@ export const state = {
   currentSetArrows: [],
   history: [],
   totalScore: 0,
-  selectedArrows: JSON.parse(localStorage.getItem('archery_arrows')) || {
+  // Pokud existují uložené šípy v paměti, použijí se. Jinak se přednastaví 1 až 12.
+  selectedArrows: savedArrowsFromStorage || {
     '65m': Array.from({ length: 12 }, (_, i) => i + 1),
     '50m': Array.from({ length: 12 }, (_, i) => i + 1),
     '35m': Array.from({ length: 12 }, (_, i) => i + 1),
