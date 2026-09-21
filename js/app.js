@@ -35,6 +35,18 @@ App.show('home');
 
 // Offline režim (service worker)
 if ('serviceWorker' in navigator) {
+  // Service worker oznámí, které soubory se nepodařilo uložit
+  navigator.serviceWorker.onmessage = function (e) {
+    if (e.data && e.data.type === 'sw-failed') {
+      alert('Offline režim se nepodařilo připravit. Chybí tyto soubory:\n' + e.data.files.join('\n'));
+    }
+  };
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (err) {
+      alert('Offline režim: service worker se nepodařilo zaregistrovat.\n' + err.message);
+    });
+  });
+}if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js').catch(function () { /* bez offline režimu */ });
   });
