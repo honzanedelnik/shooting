@@ -31,10 +31,7 @@ const App = (() => {
   return { show: show, share: share };
 })();
 
-App.show('home');
-
-// Offline režim (service worker)
-if ('serviceWorker' in navigator) {
+App.show('home');if ('serviceWorker' in navigator) {
   // Service worker oznámí, které soubory se nepodařilo uložit
   navigator.serviceWorker.onmessage = function (e) {
     if (e.data && e.data.type === 'sw-failed') {
