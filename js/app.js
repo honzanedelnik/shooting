@@ -32,3 +32,10 @@ const App = (() => {
 })();
 
 App.show('home');
+
+// Offline režim (service worker)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* bez offline režimu */ });
+  });
+}
