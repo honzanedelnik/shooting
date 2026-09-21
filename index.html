@@ -13,6 +13,7 @@
 <body>
   <header class="app-header"><h1>Střelecký deník</h1></header>
   <main id="app"></main>
+  <footer id="swStatus" class="muted" style="max-width:640px;margin:0 auto;padding:0 12px 16px"></footer>
   <div id="overlay" hidden></div>
 
   <script src="js/rules.js"></script>
@@ -26,17 +27,31 @@
   <script src="js/app.js"></script>
 
   <script>
-    // Registrace service workeru je záměrně přímo v HTML, aby ji PWABuilder snáz našel
-    if ('serviceWorker' in navigator) {
+    // Registrace service workeru je záměrně přímo v HTML, aby ji PWABuilder snáz našel.
+    // Selhání se nehlásí hláškou, jen se zapíše do stavového řádku dole (včetně verze prohlížeče).
+    (function () {
+      var box = document.getElementById('swStatus');
+      function status(text) { box.textContent = 'Offline režim: ' + text; }
+      function fail(text) { status(text + ' · ' + navigator.userAgent); }
+
+      if (!('serviceWorker' in navigator)) {
+        fail('tento prohlížeč ho nepodporuje (aplikace funguje online)');
+        return;
+      }
+      status('připravuje se…');
+
       navigator.serviceWorker.onmessage = function (e) {
         if (e.data && e.data.type === 'sw-failed') {
-          alert('Offline režim se nepodařilo připravit. Chybí tyto soubory:\n' + e.data.files.join('\n'));
+          fail('chybí soubory: ' + e.data.files.join(', '));
         }
       };
       navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function (err) {
-        alert('Offline režim: service worker se nepodařilo zaregistrovat.\n' + err.message);
+        fail('nedostupný (' + err.name + ': ' + err.message + ')');
       });
-    }
+      navigator.serviceWorker.ready.then(function () {
+        status('připraven.');
+      });
+    })();
   </script>
 </body>
 </html>
